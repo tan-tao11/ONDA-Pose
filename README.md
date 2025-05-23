@@ -6,7 +6,7 @@ ONDA-Pose is a **self-supervised** framework for **6D object pose estimation**, 
 ## **✨ Key Features**
 - 🎨 **CAD-like Radiance Field:** Translates real training images into the synthetic domain with NeRFs.
 - 🔧 **Global Pose Refinement:** Refines all pseudo object poses jointly for improved consistency.
-- 🌀 **Render-and-Compare:** Performs pose optimization with minimal domain gap.
+- 🌀 **Render-and-Compare:** Performs self-supervised training with minimal domain gap.
 
 ## **🚀 Quick Start**
 ### **1. Clone Repository**
