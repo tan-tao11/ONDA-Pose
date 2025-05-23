@@ -1,0 +1,34 @@
+__parent__: configs/estimator/base.yaml
+
+step: inference
+
+datasets:
+  train: ["lm_real_ape_train",]
+  test: ["lm_real_ape_pred_init",]
+  det_files_train: ["datasets/lm/estimator/test/init_poses/yolov4x_train_bboxes_self6dpp.json",]
+  det_files_test: ["datasets/lm/estimator/test/init_poses/yolov4x_train_bboxes_self6dpp.json",]
+
+dataloader:
+  interval: 1
+  num_workers: 4
+
+model:
+  pretrained: 'weights/gdrn/lm/ape/model_final_wo_optim-e8c99c96.pth'
+
+val:
+  eval_cached: false
+  error_type: ad
+  
+test:
+  eval_period: 0
+  vis: false
+  test_bbox_type: est
+  use_pnp: false
+  save_results_only: false
+  pnp_type: ransac_pnp
+  precise_bn: 
+    enable: false
+    num_iter: 200
+  amp_test: false
+output_dir: "output/lm/ape"
+  

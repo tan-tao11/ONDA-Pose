@@ -1,0 +1,88 @@
+# Default 
+step: pretrain
+group: Ape_mask  
+model: pretrain_trainer
+batch_size:
+load:
+seed: 0
+
+data:
+  root: datasets/
+  dataset: lm
+  object: ape
+  scene: scene_pretrain_mask
+  image_size: [128, 128]
+  preload: true
+  val_on_test: false
+  num_workers: 4
+  augment:
+  scene_info_source:
+  pose_source: predicted
+  box_format: wh
+  mask_visible_source: mask_visible
+  erode_mask:
+  erode_mask_loss: false
+
+architecture: 
+  layers_feat: [null,256,256,256,256,256,256,256,256]     # hidden layers for feature/density MLP]
+  layers_rgb: [null,256,256,256,3]                         # hidden layers for color MLP]
+  skip: [4]                                               # skip connections
+  pos_encoding:                                                 # positional encoding:
+    L_3D: 10                                             # number of bases (3D point)
+    L_view: 4                                                # number of bases (viewpoint)
+  density_activ: softplus                                 # activation function for output volume density
+  tf_init: true                                           # initialize network weights in TensorFlow style
+
+nerf:
+  view_dep: True                                          # condition MLP on viewpoint
+  depth:                                                  # depth-related options
+    param: metric                                       # depth parametrization (for sampling along the ray)
+    range: [0, 3]                                     # near/far bounds for depth sampling, measured in *meter* unit
+    scale: 10                                           # Transform to other metric (such as dm) for pose and depth,  which stored as m for default
+    range_source: 'box'
+    box_mask:
+    box_source: 'pred_box'
+
+  sample_intvs: 64                                          # number of intervals for sampling along the ray
+  sample_stratified: true                                   # stratified sampling
+  rand_rays: 2048                                        # number of rays to sample per batch
+  mask_obj: true                                          # mask out the object region
+
+camera:
+  model: perspective
+  ndc: false
+
+loss_weight:                      
+  render: 0                    
+  depth: 
+  mask: -1
+  reg: -4
+
+optimizer:
+  lr: 1.e-4
+  lr_end: 1.e-4
+  type: Adam
+  scheduler: 
+    type: ExponentialLR
+    gamma: 0.999992  
+
+tb:                                                         # TensorBoard options
+    num_images: [3,4]                                       # number of (tiled) images to visualize in TensorBoard
+visdom:                                                     # Visdom options
+
+
+max_epoch:    
+max_iter: 200000
+
+freq: 
+  log: 100
+  vis: 1000
+  val: 2000
+  ckpt: 10000
+
+output_root: output/
+resume: false
+
+gpu: 3
+
+c2f:

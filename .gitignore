@@ -1,0 +1,11 @@
+.cache/
+.vscode/
+.tmp/
+datasets/
+detectron2/
+kaolin/
+output/
+render_results/
+command.txt
+environment.yaml
+weights/

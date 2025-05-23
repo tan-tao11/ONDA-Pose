@@ -1,0 +1,15 @@
+
+
+
+# kaolin
+# git clone https://github.com/NVIDIAGameWorks/kaolin.git
+# cd kaolin
+# git checkout v0.1
+# git submodule update --init --recursive
+# pip install -e .
+
+# install detectron2
+
+# install mmcv-full
+# pip install -U openmim
+# mim install mmcv-full

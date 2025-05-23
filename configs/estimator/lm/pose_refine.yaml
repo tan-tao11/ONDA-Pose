@@ -1,0 +1,13 @@
+step: pose_refine
+
+obj_pose_file: 'output/lm/ape/test_result/lm_real_ape_pred_init/lm_lm_real_ape_pred_init_preds.pkl'
+cam_pose_file: 'datasets/lm/estimator/test/init_poses/camera_poses_colmap.json'
+model_ply_file: 'datasets/lm/estimator/models/obj_000001.ply'
+scene_split: 'splits/lm/ape/scene_texture_mask'
+output_json: 'datasets/lm/estimator/test/init_poses/yolov4x_train_bboxes_refined_pseudo_poses.json'
+bboxs_source: 'datasets/lm/estimator/test/init_poses/yolov4x_train_bboxes_self6dpp.json'
+scene_id: 1
+obj_id: 1
+scale: 1
+threads: 10
+symmetric: false

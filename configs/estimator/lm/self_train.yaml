@@ -1,0 +1,88 @@
+__parent__: configs/estimator/base.yaml
+
+step: self_train
+
+datasets:
+  train: ["lm_real_ape_train",]
+  test: ["lm_real_ape_test",]
+  det_files_train: ["datasets/lm/estimator/test/init_poses/yolov4x_train_bboxes_self6dpp.json",]
+  det_files_test: ["datasets/lm/estimator/test/test_bboxes/yolov4x_test_bboxes_self6dpp.json",]
+
+dataloader:
+  interval: 1
+  num_workers: 8
+
+model:
+  pretrained: 'weights/gdrn/lm/ape/model_final_wo_optim-e8c99c96.pth'
+  self_train: true
+  freeze_bn: true
+  load_dets_train: true
+  load_dets_train_pose: true
+  load_dets_test: true
+
+renderer:
+  dibr:
+    znear: 0.01
+    zfar: 100.0
+    height: 480
+    width: 640
+    mode: VertexColorBatch
+
+train:
+  epochs: 100
+  batch_size: 8
+  base_lr: 1e-4
+  optimizer_cfg:
+    type: Ranger 
+    lr: 1e-4
+    weight_decay: 0
+  scheduler_cfg:
+    name: flat_and_anneal
+    warmup_factor: 0.001
+    warmup_iters: 100
+    warmup_method: linear
+    anneal_method: step
+    anneal_point: 0.72
+    rel_steps: [0.5, 0.75]
+    poly_power: 0.9
+    gamma: 0.1 
+    # Self-supervised training loss
+  self_loss:
+    mask_type: vis
+    mask_weight_type: edge_lower
+    # mask loss
+    mask_loss_cfg:
+      loss_type: RW_BCE
+      loss_weight: 1
+    # Synthetic rgb loss
+    syn_rgb_loss_cfg:
+      loss_weight: 1
+    # Ms ssim loss
+    ms_ssim_loss_cfg:
+      loss_weight: 1
+
+    # point matching loss
+    pm_loss_cfg:
+      loss_weight: 10
+  checkpoint_by_epoch: true
+  checkpoint_period: 10
+  max_to_keep: 5
+  print_freq: 50
+
+val:
+  eval_cached: false
+  error_type: ad
+
+test:
+  eval_period: 0
+  vis: false
+  test_bbox_type: est
+  use_pnp: false
+  save_results_only: false
+  pnp_type: ransac_pnp
+  precise_bn: 
+    enable: false
+    num_iter: 200
+  amp_test: false
+output_dir: "output/lm/ape"
+  

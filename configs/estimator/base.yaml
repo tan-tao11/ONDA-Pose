@@ -1,0 +1,214 @@
+step: 
+
+input: 
+  format: BGR
+  min_size_train: [480, ]
+  max_size_train: 640
+  min_size_test: 480
+  max_size_test: 640
+  min_size_train_sampling: "choice"
+  aug_depth: false
+  with_depth: false
+  dzi_type: uniform
+  dzi_pad_scale: 1.5
+  dzi_scale_ratio: 0.25
+  dzi_shift_ratio: 0.25
+  truncate_fg: false
+  change_bg_prob: 0.0
+  color_aug_prob: 0.5
+  color_aug_type: "code"
+  color_aug_code: |
+    Sequential([
+        # Sometimes(0.5, PerspectiveTransform(0.05)),
+        # Sometimes(0.5, CropAndPad(percent=(-0.05, 0.1))),
+        # Sometimes(0.5, Affine(scale=(1.0, 1.2))),
+        Sometimes(0.5, CoarseDropout( p=0.2, size_percent=0.05) ),
+        Sometimes(0.4, GaussianBlur((0., 3.))),
+        Sometimes(0.3, pillike.EnhanceSharpness(factor=(0., 50.))),
+        Sometimes(0.3, pillike.EnhanceContrast(factor=(0.2, 50.))),
+        Sometimes(0.5, pillike.EnhanceBrightness(factor=(0.1, 6.))),
+        Sometimes(0.3, pillike.EnhanceColor(factor=(0., 20.))),
+        Sometimes(0.5, Add((-25, 25), per_channel=0.3)),
+        Sometimes(0.3, Invert(0.2, per_channel=True)),
+        Sometimes(0.5, Multiply((0.6, 1.4), per_channel=0.5)),
+        Sometimes(0.5, Multiply((0.6, 1.4))),
+        Sometimes(0.1, AdditiveGaussianNoise(scale=10, per_channel=True)),
+        Sometimes(0.5, iaa.contrast.LinearContrast((0.5, 2.2), per_channel=0.3)),
+        # Sometimes(0.5, Grayscale(alpha=(0.0, 1.0))),  # maybe remove for det
+    ], random_order=True)
+
+datasets:
+  train: []
+  test: []
+  det_files_train: []
+  det_thr_train: 0.5
+  det_thr: 0.0
+  det_files_test: []
+  sym_objs: ["bowl", "cup", "eggbox", "glue"]
+  det_topk_per_obj_train: 1
+  det_topk_per_obj: 1
+
+dataloader:
+  interval: 1
+  num_workers: 1
+  sampler_train: TrainingSampler
+  filter_empty_annotations: true
+  filter_visib_thr: 0.0
+  filter_empty_dets: true
+  aspect_ratio_grouping: false
+
+model:
+  name: GDRN
+  pretrained:
+  self_train: true
+  freeze_bn: true
+  load_dets_train: true
+  load_dets_train_pose: true
+  load_dets_test: true
+  pose_net:
+    name: GDRN
+    xyz_online: false
+    xyz_bp: true
+    num_classes: 13
+    use_mtl: false
+    input_res: 256
+    output_res: 64
+    backbone:
+      init_config:
+        type: "timm/resnest50d"
+        pretrained: true
+        in_chans: 3
+        features_only: true
+        out_indices: [4]
+    neck:
+      enable: false
+      freeze: false
+      lr_mult: 1.0
+      init_config:
+        type: FPN
+        in_channels: [256, 512, 1024, 2048]
+        out_channels: 256
+        num_outs: 4
+    geo_head:
+      freeze: false
+      lr_mult: 1.0
+      init_config:
+        type: 'TopDownMaskXyzRegionHead'
+        in_dim: 2048
+        feat_dim: 256
+        feat_kernel_size: 3
+        norm: GN
+        num_gn_groups: 32
+        act: GELU  # relu | lrelu | silu (swish) | gelu | mish
+        out_kernel_size: 1
+        out_layer_shared: true
+        up_types: ["deconv", "bilinear", "bilinear"]  # stride 32 to 4
+        deconv_kernel_size: 3
+        num_conv_per_block: 2
+      num_regions: 64
+      xyz_class_aware: false
+      mask_class_aware: false
+      region_class_aware: false
+    pnp_net:
+      type: ConvPnPNet
+      freeze: false
+      train_r_only: false
+      init_config:
+        type: ConvPnPNet
+        norm: GN
+        act: gelu
+        num_gn_groups: 32
+        drop_prob: 0.0  # 0.25
+        denormalize_by_extent: True
+      lr_mult: 1.0
+      coord_2d_type: abs
+      mask_attention: none
+      region_attention: true
+      with_2d_coord: true
+      rot_type: allo_rot6d
+      trans_type: centroid_z
+      z_type: REL
+  keypoint_on: false
+  load_dets_train_with_pose: true
+  ema: 
+    enable: true
+    init_cfg: 
+      decay: 0.999
+      updates: 0
+    update_freq: 10  # Update the mean teacher every n epochs
+  pseudo_pose_type: pose_refine
+  pixel_mean: [0, 0, 0]
+  pixel_std: [255.0, 255.0, 255.0]
+
+train:
+  epochs: 100
+  batch_size: 8
+  base_lr: 1e-4
+  optimizer_cfg:
+    type: Ranger 
+    lr: 1e-4
+    weight_decay: 0
+  scheduler_cfg:
+    name: flat_and_anneal
+    warmup_factor: 0.001
+    warmup_iters: 100
+    warmup_method: linear
+    anneal_method: step
+    anneal_point: 0.72
+    rel_steps: [0.5, 0.75]
+    poly_power: 0.9
+    gamma: 0.1 
+  # Fully-supervised training loss, not used during self-supervised training
+  loss:
+    # XYZ loss
+    xyz_loss_type: L1  # L1 | CE_coor
+    xyz_loss_mask_gt: visib
+    xyz_lw: 0.0
+    # mask loss 
+    mask_loss_type: BCE
+    mask_loss_gt: trunc
+    mask_lw: 0.0
+    # region loss
+    region_loss_type: CE
+    region_loss_mask_gt: visib
+    region_lw: 0.0
+    # pm loss
+    num_pm_points: 3000
+    pm_loss_type1: L1
+    pm_loss_stm: true
+    pm_R_only: true
+    pm_lw: 1.0
+    # centroid loss
+    centroid_loss_type: L1
+    centroid_lw: 1.0
+    # z loss
+    z_loss_type: L1
+    z_lw: 1.0
+    # Self-supervised training loss
+  self_loss:
+    # point matching loss
+    pm_loss_cfg:
+      loss_weight: 10
+
+  checkpoint_by_epoch: true
+  checkpoint_period: 10
+  max_to_keep: 5
+  print_freq: 50
+
+val:
+  eval_cached: false
+  error_type: ad
+
+test:
+  eval_period: 0
+  vis: false
+  test_bbox_type: est
+  use_pnp: false
+  save_results_only: false
+  pnp_type: ransac_pnp
+  precise_bn: 
+    enable: false
+    num_iter: 200
+  amp_test: false
+output_dir:
+  

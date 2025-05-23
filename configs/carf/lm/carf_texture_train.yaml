@@ -1,0 +1,134 @@
+# Default 
+step: texture_train
+group: Ape_mask
+model: texture_trainer
+load:
+resume: false
+resume_pretrain: true
+seed: 0
+
+data:
+  root: datasets/
+  dataset: lm
+  object: ape
+  scene: scene_texture_mask
+  image_size: [128, 128]
+  preload: true
+  val_on_test: false
+  num_workers: 4
+  augment:
+  scene_info_source: predicted
+  pose_source: predicted
+  box_format: 
+  mask_visible_source: mask_visible
+  erode_mask: false
+  erode_mask_loss: false
+
+architecture:
+  layers_feat: [null,256,256,256,256,256,256,256,256]     
+  layers_rgb: [null,256,256,256,3]                         
+  layers_trans: [null,256,256,256,5]                      
+  skip: [4]                                               
+  posenc:                                                 
+      L_3D: 10                                             
+      L_view: 4                                           
+  density_activ: softplus                                 
+  tf_init: true                                           
+
+nerf:
+  view_dep: false
+  depth:                                                 
+      param: metric                                       
+      range: [0, 3]                                   
+      scale: 10                                         
+      range_source: 'box'
+      box_mask: false
+      box_source: 'pred_box'
+  sample_intvs: 64                                       
+  sample_stratified: true                               
+  fine_sampling: false                                  
+  sample_intvs_fine:                                     
+  rand_rays: 2048                                         
+  ray_obj_ratio: 0.9                                     
+  density_noise_reg:                                     
+  setbg_opaq  ue:                                          
+  mask_obj: True
+  N_latent: 32
+  N_latent_trans: 16
+  N_latent_light: 0
+  min_uncert: 0.05
+  N_anchor_pose: 
+
+camera:
+  model: perspective
+  ndc: false
+
+loss_weight:                      
+  render: 0                    
+  depth: 
+  mask: 
+  reg: 
+  uncert: 0
+  trans_reg: -2
+  feat: 
+  gan_nerf: 0
+  # discriminator loss
+  gan_disc_real: 0
+  gan_disc_fake: 0
+  gan_reg_real:
+  gan_reg_fake:
+
+gan:
+  type: 'standard'
+  scale_conditional: True
+  geo_conditional: True
+  geo_c2f:
+  L_nocs:
+  L_scale: 4
+  L_normal:
+
+optimizer:
+  lr: 1.e-4
+  lr_end: 1.0e-05
+  type: Adam
+  scheduler: 
+    type: ExponentialLR
+    gamma: 0.9996163094458892 
+
+optimizer_disc:
+  type: RMSprop
+  lr: 1.0e-05
+
+freq: 
+  log: 100
+  vis: 500
+  val: 2000
+  ckpt: 10000
+  print: 500 
+
+tb:
+    num_images:
+    - 3
+    - 4
+visdom:
+
+render:
+    N_candidate: 1
+    transient: zero                                     # zero | sample
+    save_path:
+    geo_save_dir:
+
+c2f:
+    range:
+    start: 
+
+# Setting for patch16x16
+batch_size: 8                                              # batch size
+batch_size_gan: 8                                             # batch size
+patch_size: 16                                              # patch size for sampling
+max_epoch: 20000                                             # train to maximum number of epochs
+syn2real:
+
+output_root: output/
+
+gpu: '4'
