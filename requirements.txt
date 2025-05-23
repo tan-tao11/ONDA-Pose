@@ -1,5 +1,23 @@
+--extra-index-url https://download.pytorch.org/whl/cu117
+torch==1.13.0+cu117 
+torchvision==0.14.0+cu117 
+torchaudio==0.13.0 
 
-
+setproctitle
+timm==0.6.11
+numpy==1.23.0
+transforms3d
+imageio
+pypng
+scipy
+chardet
+numba
+einops
+matplotlib
+opencv-python
+scikit-image
+imgaug
+tensorboardX
 
 # kaolin
 # git clone https://github.com/NVIDIAGameWorks/kaolin.git
@@ -9,6 +27,8 @@
 # pip install -e .
 
 # install detectron2
+# git clone https://github.com/facebookresearch/detectron2.git
+# cd detectron2 && pip install -e .
 
 # install mmcv-full
 # pip install -U openmim
