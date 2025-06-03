@@ -188,6 +188,15 @@ train:
   self_loss:
     # point matching loss
     pm_loss_cfg:
+      loss_type: "L1"
+      beta: 1.0
+      reduction: "mean"
+      norm_by_extent: False
+      symmetric: True
+      disentangle_t: True 
+      disentangle_z: True
+      t_loss_use_points: True
+      r_only: False
       loss_weight: 10
 
   checkpoint_by_epoch: true
